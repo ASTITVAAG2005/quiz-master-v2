@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Initialize db object (will be imported and configured in app.py)
 db = SQLAlchemy()
@@ -18,6 +19,26 @@ class User(db.Model):
     Qualification = db.Column(db.String(500), nullable=False)
     DOB = db.Column(db.Date, nullable=False)
     Role = db.Column(db.String(10), nullable=False, default="user")
+    
+    def set_password(self, password):
+        """Hash and set password"""
+        self.Password = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Check if provided password matches hashed password"""
+        return check_password_hash(self.Password, password)
+    
+    def to_dict(self):
+        """Convert user object to dictionary"""
+        return {
+            'UserID': self.UserID,
+            'Username': self.Username,
+            'Email': self.Email,
+            'Fullname': self.Fullname,
+            'Qualification': self.Qualification,
+            'DOB': self.DOB.isoformat() if self.DOB else None,
+            'Role': self.Role
+        }
 
 
 class Subject(db.Model):

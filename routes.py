@@ -1,5 +1,5 @@
 import os
-from flask import render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
+from flask import render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory, current_app
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 import matplotlib
@@ -14,22 +14,58 @@ from models import db, User, Subject, Chapter, Quiz, Questions, UserAnswers, Sco
 def init_routes(app):
     """Initialize all routes for the Flask application"""
 
+    @app.route('/')
+    def home():
+        """Home page"""
+        return render_template('index.html')
+
     # -------------------------------- admin authentication ----------------------------------- #
 
     @app.route('/adminlogin', methods=['POST'])
     def adminlogin():
         username = request.form['username']
         password = request.form['password']
-        admin = User.query.filter_by(Username=username, Password=password, Role='admin').first()
-        if admin:
+        admin = User.query.filter_by(Username=username, Role='admin').first()
+        
+        if admin and admin.check_password(password):
+            # Generate JWT token
+            token = current_app.generate_token(admin.UserID, admin.Username, admin.Role)
+            
+            # For web interface, still use session
             session['user_id'] = admin.UserID
             session['username'] = admin.Username
             session['role'] = 'admin'
+            session['token'] = token
             flash('Admin Login Successful!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
             flash('Invalid Admin Credentials!', 'danger')
             return redirect(url_for('home'))
+
+    @app.route('/api/adminlogin', methods=['POST'])
+    def api_adminlogin():
+        """API endpoint for admin login - returns JWT token"""
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
+        
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return jsonify({'message': 'Username and password required'}), 400
+        
+        admin = User.query.filter_by(Username=username, Role='admin').first()
+        
+        if admin and admin.check_password(password):
+            token = current_app.generate_token(admin.UserID, admin.Username, admin.Role)
+            return jsonify({
+                'message': 'Login successful',
+                'token': token,
+                'user': admin.to_dict()
+            }), 200
+        else:
+            return jsonify({'message': 'Invalid credentials'}), 401
         
 
     # -------------------------------- User signup , login and logout -------------------------------- #
@@ -52,29 +88,97 @@ def init_routes(app):
         new_user = User(
             Username=username, 
             Email=email, 
-            Password=password,
             Fullname=fullname,
             Qualification=qualification,
             DOB=dob)
+        new_user.set_password(password)  # Use hashed password
         db.session.add(new_user)
         db.session.commit()
         flash("User Registration Successful! Please Login.", "success")
         return redirect(url_for("home"))
 
+    @app.route('/api/usersignup', methods=['POST'])
+    def api_usersignup():
+        """API endpoint for user signup"""
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
+        
+        required_fields = ['username', 'email', 'password', 'fullname', 'qualification', 'dob']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'message': f'{field} is required'}), 400
+        
+        try:
+            dob = datetime.strptime(data['dob'], "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD'}), 400
+        
+        existing_user = User.query.filter((User.Username == data['username']) | (User.Email == data['email'])).first()
+        if existing_user:
+            return jsonify({'message': 'Username or Email already exists'}), 400
+        
+        new_user = User(
+            Username=data['username'], 
+            Email=data['email'], 
+            Fullname=data['fullname'],
+            Qualification=data['qualification'],
+            DOB=dob)
+        new_user.set_password(data['password'])
+        
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify({'message': 'User registration successful'}), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'message': 'Registration failed'}), 500
+
     @app.route('/userlogin', methods=['POST'])
     def userlogin():
         username = request.form['username']
         password = request.form['password']
-        user = User.query.filter_by(Username=username, Password=password).first()
-        if user:
+        user = User.query.filter_by(Username=username).first()
+        
+        if user and user.check_password(password):
+            # Generate JWT token
+            token = current_app.generate_token(user.UserID, user.Username, user.Role)
+            
+            # For web interface, still use session
             session['user_id'] = user.UserID
             session['username'] = user.Username
             session['role'] = user.Role
+            session['token'] = token
             flash("Login Successful!", "success")
             return redirect(url_for("admin_dashboard" if user.Role == "admin" else "user_dashboard"))
         else:
             flash("Invalid Credentials! Please try again or sign up.", "danger")
             return redirect(url_for("home"))
+
+    @app.route('/api/userlogin', methods=['POST'])
+    def api_userlogin():
+        """API endpoint for user login - returns JWT token"""
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
+        
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return jsonify({'message': 'Username and password required'}), 400
+        
+        user = User.query.filter_by(Username=username).first()
+        
+        if user and user.check_password(password):
+            token = current_app.generate_token(user.UserID, user.Username, user.Role)
+            return jsonify({
+                'message': 'Login successful',
+                'token': token,
+                'user': user.to_dict()
+            }), 200
+        else:
+            return jsonify({'message': 'Invalid credentials'}), 401
         
 
     @app.route('/logout')
@@ -82,6 +186,39 @@ def init_routes(app):
         session.clear()
         flash("Logged Out Successfully!", "info")
         return redirect(url_for("home"))
+
+    @app.route('/api/logout', methods=['POST'])
+    def api_logout():
+        """API endpoint for logout - JWT tokens are stateless, so we just return success"""
+        return jsonify({'message': 'Logout successful'}), 200
+
+    @app.route('/api/verify-token', methods=['GET'])
+    def api_verify_token():
+        """API endpoint to verify if token is valid"""
+        token = None
+        
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(" ")[1]  # Bearer <token>
+            except IndexError:
+                return jsonify({'message': 'Invalid token format'}), 401
+        
+        if not token:
+            return jsonify({'message': 'Token is missing'}), 401
+        
+        current_user = current_app.verify_token(token)
+        if current_user is None:
+            return jsonify({'message': 'Token is invalid or expired'}), 401
+        
+        return jsonify({
+            'message': 'Token is valid',
+            'user': {
+                'user_id': current_user['user_id'],
+                'username': current_user['username'],
+                'role': current_user['role']
+            }
+        }), 200
 
     # -------------------------------- Admin and user Dashboard  -------------------------------- #
 
@@ -556,43 +693,154 @@ def init_routes(app):
 
     # -------------------------------- API endpoints  --------------------------------- #
 
-    @app.route('/api/subjects', methods=['GET'])
-    def get_subjects():
+    @app.route('/api/admin/dashboard', methods=['GET'])
+    @app.admin_required
+    def api_admin_dashboard(current_user):
+        """JWT-protected API endpoint for admin dashboard"""
+        query = request.args.get('query', '').strip()
+        
+        if query:  
+            users = [user.to_dict() for user in User.query.filter(User.Username.ilike(f"%{query}%")).all()]
+            subjects = [{'SubjectID': s.SubjectID, 'Subjectname': s.Subjectname, 'Description': s.Description} 
+                       for s in Subject.query.filter(Subject.Subjectname.ilike(f"%{query}%")).all()]
+            quizzes = [{'QuizID': q.QuizID, 'Date_of_quiz': q.Date_of_quiz.isoformat(), 
+                       'Time_duration': q.Time_duration, 'Remarks': q.Remarks, 'ChapterID': q.ChapterID} 
+                      for q in Quiz.query.filter(Quiz.QuizID.ilike(f"%{query}%")).all()]
+            questions = [{'QuestionID': q.QuestionID, 'Question_statement': q.Question_statement,
+                         'Option1': q.Option1, 'Option2': q.Option2, 'Option3': q.Option3, 'Option4': q.Option4,
+                         'Correct_option': q.Correct_option, 'QuizID': q.QuizID} 
+                        for q in Questions.query.filter(Questions.Question_statement.ilike(f"%{query}%")).all()]
+            chapters = [{'ChapterID': c.ChapterID, 'Chaptername': c.Chaptername, 
+                        'Description': c.Description, 'SubjectID': c.SubjectID}
+                       for c in Chapter.query.filter(Chapter.Chaptername.ilike(f"%{query}%")).all()]  
+        else: 
+            users = [user.to_dict() for user in User.query.all()]
+            subjects = [{'SubjectID': s.SubjectID, 'Subjectname': s.Subjectname, 'Description': s.Description} 
+                       for s in Subject.query.all()]
+            quizzes = [{'QuizID': q.QuizID, 'Date_of_quiz': q.Date_of_quiz.isoformat(), 
+                       'Time_duration': q.Time_duration, 'Remarks': q.Remarks, 'ChapterID': q.ChapterID} 
+                      for q in Quiz.query.all()]
+            questions = [{'QuestionID': q.QuestionID, 'Question_statement': q.Question_statement,
+                         'Option1': q.Option1, 'Option2': q.Option2, 'Option3': q.Option3, 'Option4': q.Option4,
+                         'Correct_option': q.Correct_option, 'QuizID': q.QuizID} 
+                        for q in Questions.query.all()]
+            chapters = [{'ChapterID': c.ChapterID, 'Chaptername': c.Chaptername, 
+                        'Description': c.Description, 'SubjectID': c.SubjectID}
+                       for c in Chapter.query.all()]
+
+        return jsonify({
+            'users': users,
+            'subjects': subjects,
+            'quizzes': quizzes,
+            'questions': questions,
+            'chapters': chapters
+        }), 200
+
+    @app.route('/api/user/dashboard', methods=['GET'])
+    @app.token_required
+    def api_user_dashboard(current_user):
+        """JWT-protected API endpoint for user dashboard"""
+        if current_user['role'] != 'user':
+            return jsonify({'message': 'User access required'}), 403
+        
+        user = User.query.get(current_user['user_id'])
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Get upcoming quizzes
+        upcoming_quizzes = Quiz.query.filter(Quiz.Date_of_quiz >= datetime.now().date()).all()
+        upcoming_quizzes_data = [{'QuizID': q.QuizID, 'Date_of_quiz': q.Date_of_quiz.isoformat(), 
+                                 'Time_duration': q.Time_duration, 'Remarks': q.Remarks, 'ChapterID': q.ChapterID} 
+                                for q in upcoming_quizzes]
+
+        # Get subjects
         subjects = Subject.query.all()
-        subjects_data = [{'SubjectID': subject.SubjectID,'Subjectname': subject.Subjectname,'Description': subject.Description} for subject in subjects]
-        return jsonify({'subjects': subjects_data})
+        subjects_data = [{'SubjectID': s.SubjectID, 'Subjectname': s.Subjectname, 'Description': s.Description} 
+                        for s in subjects]
 
-    @app.route('/api/chapters/<int:subject_id>', methods=['GET'])
-    def get_chapters(subject_id):
-        chapters = Chapter.query.filter_by(SubjectID=subject_id).all()
-        if not chapters:
-            return jsonify({'error': 'No chapters found for this subject'}), 404
+        # Get user scores
+        scores = Score.query.filter_by(UserID=user.UserID).all()
+        scores_data = [{'ScoreID': s.ScoreID, 'QuizID': s.QuizID, 'TotalScore': s.TotalScore,
+                       'TimeStamp': s.TimeStamp.isoformat() if s.TimeStamp else None} 
+                      for s in scores]
+
+        return jsonify({
+            'user': user.to_dict(),
+            'upcoming_quizzes': upcoming_quizzes_data,
+            'subjects': subjects_data,
+            'scores': scores_data
+        }), 200
+
+    @app.route('/api/admin/users', methods=['GET'])
+    @app.admin_required
+    def api_get_users(current_user):
+        """Get all users - Admin only"""
+        users = User.query.all()
+        return jsonify({
+            'users': [user.to_dict() for user in users]
+        }), 200
+
+    @app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+    @app.admin_required
+    def api_delete_user(current_user, user_id):
+        """Delete a user - Admin only"""
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
         
-        chapters_data = [{'ChapterID': chapter.ChapterID,'Chaptername': chapter.Chaptername,'Description': chapter.Description} for chapter in chapters]
-        return jsonify({'chapters': chapters_data})
-
-    @app.route('/api/quizzes/<int:chapter_id>', methods=['GET'])
-    def get_quizzes(chapter_id):
-        quizzes = Quiz.query.filter_by(ChapterID=chapter_id).all()
-        if not quizzes:
-            return jsonify({'error': 'No quizzes found for this chapter'}), 404
+        if user.Role == 'admin':
+            return jsonify({'message': 'Cannot delete admin user'}), 403
         
-        quizzes_data = [{'QuizID': quiz.QuizID,'ChapterID': quiz.ChapterID,'Date_of_quiz': quiz.Date_of_quiz,'Time_duration': quiz.Time_duration} for quiz in quizzes]
-        return jsonify({'quizzes': quizzes_data})
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return jsonify({'message': 'User deleted successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': 'Failed to delete user'}), 500
 
-    @app.route('/api/scores/<int:user_id>', methods=['GET'])
-    def get_scores(user_id):
-        scores = Score.query.filter_by(UserID=user_id).all()
-        if not scores:
-            return jsonify({'error': 'No scores found for this user'}), 404
+    @app.route('/api/subjects', methods=['GET'])
+    @app.token_required
+    def api_get_subjects(current_user):
+        """Get all subjects"""
+        subjects = Subject.query.all()
+        return jsonify({
+            'subjects': [{'SubjectID': s.SubjectID, 'Subjectname': s.Subjectname, 'Description': s.Description} 
+                        for s in subjects]
+        }), 200
+
+    @app.route('/api/admin/subjects', methods=['POST'])
+    @app.admin_required
+    def api_create_subject(current_user):
+        """Create a new subject - Admin only"""
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
         
-        scores_data = [{'ScoreID': score.ScoreID,'QuizID': score.QuizID,'TotalScore': score.TotalScore,'Timestamp': score.TimeStamp.strftime('%Y-%m-%d %H:%M:%S') } for score in scores]
-        return jsonify({'scores': scores_data})
+        if not data.get('subjectname') or not data.get('description'):
+            return jsonify({'message': 'Subject name and description are required'}), 400
+        
+        new_subject = Subject(
+            Subjectname=data['subjectname'],
+            Description=data['description']
+        )
+        
+        try:
+            db.session.add(new_subject)
+            db.session.commit()
+            return jsonify({
+                'message': 'Subject created successfully',
+                'subject': {
+                    'SubjectID': new_subject.SubjectID,
+                    'Subjectname': new_subject.Subjectname,
+                    'Description': new_subject.Description
+                }
+            }), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'message': 'Subject creation failed'}), 500
 
-    @app.route("/")
-    def home():
-        return render_template("index.html")
-
+    # ...existing code...
 
 def generate_admin_summary():
     users = User.query.all()
