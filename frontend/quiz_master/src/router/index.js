@@ -3,6 +3,11 @@ import HomeView from '../views/HomeView.vue'
 import AdminDashboard from '@/components/admin/AdminDashboard.vue'
 import ViewUsers from '@/components/admin/ViewUsers.vue'  
 import AdminSummaryPage from '@/components/admin/AdminSummaryPage.vue'
+
+import UserDashboard from '@/components/user/UserDashboard.vue'
+import UserSummaryPage from '@/components/user/UserSummaryPage.vue'
+import UserQuizScore from '@/components/user/UserQuizScore.vue'
+
 const routes = [
   {
     path: '/',
@@ -23,7 +28,23 @@ const routes = [
     path: '/admin/summary',
     name: 'AdminSummary',
     component: AdminSummaryPage
+  },
+  {
+  path: '/user-dashboard',
+  name: 'UserDashboard',
+  component: UserDashboard
+},
+{
+    path: '/user/summary',
+    name: 'UserSummary',
+    component: UserSummaryPage
+  },
+  {
+    path: '/user/quiz-scores',
+    name: 'UserQuizScore',
+    component: UserQuizScore
   }
+
 ]
 
 const router = createRouter({

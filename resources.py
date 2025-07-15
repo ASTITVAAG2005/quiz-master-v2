@@ -57,7 +57,7 @@ api.add_resource(AdminSummary, '/admin/summary')
 # -------------------------------
 # 👤 User Routes
 # -------------------------------
-api.add_resource(UserDashboardData, '/user/dashboard-data')
+api.add_resource(UserDashboardData, '/user/dashboard')
 api.add_resource(StartQuiz, '/user/quiz/start/<int:quiz_id>')
 api.add_resource(NextQuestion, '/user/quiz/next')
 api.add_resource(SaveAnswer, '/user/quiz/save')

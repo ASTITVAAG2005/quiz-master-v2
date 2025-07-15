@@ -148,6 +148,7 @@ class UserDashboardData(Resource):
         query = request.args.get('query', '').strip().lower()
         today = datetime.today().date()
 
+        # Filter subjects (with or without search query)
         if query:
             subjects = Subject.query.filter(Subject.Subjectname.ilike(f"%{query}%")).all()
         else:
@@ -164,23 +165,23 @@ class UserDashboardData(Resource):
                     upcoming_quizzes.append({
                         "quiz": {
                             "id": quiz.QuizID,
-                            "name": quiz.Quizname,
-                            "date": quiz.Date_of_quiz.isoformat(),
-                            "chapter_id": quiz.ChapterID,
-                            "total_questions": quiz.TotalQuestions
+                            "date": quiz.Date_of_quiz.strftime('%Y-%m-%d'),
+                            "duration": quiz.Time_duration,
+                            "total_questions": len(quiz.QuestionsR)
                         },
                         "chapter": {
                             "id": chapter.ChapterID,
-                            "name": chapter.Chaptername,
-                            "subject_id": chapter.SubjectID
+                            "name": chapter.Chaptername
                         },
                         "subject": {
                             "id": subject.SubjectID,
-                            "name": subject.Subjectname
+                            "name": subject.Subjectname,
+                            "description": subject.Description
                         },
                         "is_expired": is_expired
                     })
 
+        # Fetch user scores
         scores = Score.query.filter_by(UserID=user.UserID).all()
         score_data = [
             {
@@ -201,14 +202,17 @@ class UserDashboardData(Resource):
                 "fullname": user.Fullname
             },
             "subjects": [
-                {"id": s.SubjectID, "name": s.Subjectname}
-                for s in subjects
+                {
+                    "id": subject.SubjectID,
+                    "name": subject.Subjectname,
+                    "description": subject.Description
+                }
+                for subject in subjects
             ],
             "upcoming_quizzes": upcoming_quizzes,
             "scores": score_data,
             "query": query
         }, 200
-
 # -------------------------------- User Functionalities --------------------------------- #
 
 # routes/user_api.py
@@ -323,18 +327,37 @@ class UserScores(Resource):
         scores = Score.query.filter_by(UserID=user_id).all()
         result = []
 
+        IST_OFFSET = timedelta(hours=5, minutes=30)
+
         for score in scores:
-            ist_time = score.TimeStamp + timedelta(hours=5, minutes=30)
+            ist_time = score.TimeStamp + IST_OFFSET
+
+            quiz = score.quiz
+            chapter = quiz.chapter if quiz else None
+            subject = chapter.subject if chapter else None
+
+            questions_data = []
+            for question in quiz.QuestionsR:
+                user_answer_obj = next((ua for ua in score.user_answers if ua.QuestionID == question.QuestionID), None)
+                questions_data.append({
+                    "id": question.QuestionID,
+                    "statement": question.Question_statement,
+                    "user_answer": user_answer_obj.SelectedAnswer if user_answer_obj else "Not Answered",
+                    "correct_answer": question.Correct_option
+                })
+
             result.append({
                 "score_id": score.ScoreID,
-                "quiz_id": score.QuizID,
+                "quiz_id": quiz.QuizID,
                 "total_score": score.TotalScore,
                 "timestamp": ist_time.strftime('%d-%m-%Y %H:%M:%S'),
-                "retake_allowed": score.TotalScore < 40
+                "chapter_name": chapter.Chaptername if chapter else "N/A",
+                "subject_name": subject.Subjectname if subject else "N/A",
+                "retake_allowed": score.TotalScore < 40,
+                "questions": questions_data
             })
 
         return {"scores": result}, 200
-
 
 # -------------------------------- Summary Charts --------------------------------- #
 
