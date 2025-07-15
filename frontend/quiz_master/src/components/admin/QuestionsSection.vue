@@ -158,6 +158,7 @@ export default {
       })
       .then(() => {
         this.fetchQuestions()
+        this.$emit('refresh')
         this.newQuestion = {
           quiz_id: '',
           question: '',
@@ -184,6 +185,7 @@ export default {
       })
       .then(() => {
         this.fetchQuestions()
+        this.$emit('refresh')
       })
       .catch(err => {
         this.error = 'Failed to delete question'
@@ -205,6 +207,7 @@ export default {
       })
       .then(() => {
         this.fetchQuestions()
+        this.$emit('refresh')
         this.showEditQuestionModal = false
         this.editedQuestion = null
       })

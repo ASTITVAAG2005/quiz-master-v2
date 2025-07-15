@@ -145,6 +145,7 @@ export default {
       })
       .then(() => {
         this.fetchChapters()
+        this.$emit('refresh') 
         this.newChapter = { subject_id: '', name: '', description: '' }
         this.showAddModal = false
       })
@@ -161,6 +162,7 @@ export default {
 
     updateChapter() {
       const token = localStorage.getItem("access_token")
+      
       axios.put(`http://localhost:5000/api/admin/chapters/${this.editedChapter.id}`, {
         name: this.editedChapter.name,
         subject_id: this.editedChapter.subject_id,
@@ -172,6 +174,7 @@ export default {
         this.fetchChapters()
         this.showEditModal = false
         this.editedChapter = { id: null, subject_id: '', name: '', description: '' }
+        this.$emit('refresh')
       })
       .catch(err => {
         this.error = 'Failed to update chapter'
@@ -186,6 +189,7 @@ export default {
       })
       .then(() => {
         this.fetchChapters()
+        this.$emit('refresh') 
       })
       .catch(err => {
         this.error = 'Failed to delete chapter'

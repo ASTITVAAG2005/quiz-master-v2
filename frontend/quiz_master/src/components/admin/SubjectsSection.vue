@@ -117,6 +117,7 @@ export default {
       })
       .then(() => {
         this.fetchSubjects()
+        this.$emit('refresh') 
         this.showAddSubjectModal = false
         this.newSubject = { name: '', description: '' }
       })
@@ -141,6 +142,7 @@ export default {
       })
       .then(() => {
         this.fetchSubjects()
+        this.$emit('refresh') 
         this.showEditSubjectModal = false
         this.editedSubject = { id: null, name: '', description: '' }
       })
@@ -155,7 +157,10 @@ export default {
       axios.delete(`http://localhost:5000/api/admin/subjects/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      .then(() => this.fetchSubjects())
+      .then(() => {
+        this.fetchSubjects()
+        this.$emit('refresh')
+      })
       .catch(err => {
         this.error = 'Failed to delete subject'
         console.error('Delete error:', err.response?.data || err)

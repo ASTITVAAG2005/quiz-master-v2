@@ -2,11 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Initialize db object (will be imported and configured in app.py)
 db = SQLAlchemy()
-
-
-# -------------------------------- Models and Tables ---------------------------------------- #
 
 
 class User(db.Model):
@@ -19,17 +15,16 @@ class User(db.Model):
     Qualification = db.Column(db.String(500), nullable=False)
     DOB = db.Column(db.Date, nullable=False)
     Role = db.Column(db.String(10), nullable=False, default="user")
-    
+
+    scores = db.relationship('Score', backref='user', cascade='all, delete', passive_deletes=True)
+
     def set_password(self, password):
-        """Hash and set password"""
         self.Password = generate_password_hash(password)
-    
+
     def check_password(self, password):
-        """Check if provided password matches hashed password"""
         return check_password_hash(self.Password, password)
-    
+
     def to_dict(self):
-        """Convert user object to dictionary"""
         return {
             'UserID': self.UserID,
             'Username': self.Username,
@@ -47,6 +42,8 @@ class Subject(db.Model):
     Subjectname = db.Column(db.String(500), nullable=False)
     Description = db.Column(db.String(500), nullable=False)
 
+    chapters = db.relationship('Chapter', backref='subject', cascade='all, delete', passive_deletes=True)
+
 
 class Chapter(db.Model):
     __tablename__ = 'chapter'
@@ -54,9 +51,8 @@ class Chapter(db.Model):
     Chaptername = db.Column(db.String(500), nullable=False)
     Description = db.Column(db.String(500), nullable=False)
 
-    QuizR = db.relationship('Quiz', backref='chapter', lazy=True)
-    SubjectID = db.Column(db.Integer, db.ForeignKey('subject.SubjectID'), nullable=False)
-    subject = db.relationship('Subject', backref='chapters')
+    SubjectID = db.Column(db.Integer, db.ForeignKey('subject.SubjectID', ondelete='CASCADE'), nullable=False)
+    quizzes = db.relationship('Quiz', backref='chapter', cascade='all, delete', passive_deletes=True)
 
 
 class Quiz(db.Model):
@@ -65,8 +61,10 @@ class Quiz(db.Model):
     Date_of_quiz = db.Column(db.Date, nullable=False)
     Time_duration = db.Column(db.String(5), nullable=False)
     Remarks = db.Column(db.String(500))
-    ChapterID = db.Column(db.Integer, db.ForeignKey('chapter.ChapterID'), nullable=False)
-    QuestionsR = db.relationship('Questions', backref='quiz', lazy=True)
+
+    ChapterID = db.Column(db.Integer, db.ForeignKey('chapter.ChapterID', ondelete='CASCADE'), nullable=False)
+    questions = db.relationship('Questions', backref='quiz', cascade='all, delete', passive_deletes=True)
+    scores = db.relationship('Score', backref='quiz', cascade='all, delete', passive_deletes=True)
 
 
 class Questions(db.Model):
@@ -78,27 +76,26 @@ class Questions(db.Model):
     Option3 = db.Column(db.String(500), nullable=False)
     Option4 = db.Column(db.String(500), nullable=False)
     Correct_option = db.Column(db.String(500), nullable=False)
-    QuizID = db.Column(db.Integer, db.ForeignKey('quiz.QuizID'), nullable=False)
 
-
-class UserAnswers(db.Model):
-    __tablename__ = 'user_answers'
-    AnswerID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    ScoreID = db.Column(db.Integer, db.ForeignKey('score.ScoreID'), nullable=False)
-    QuestionID = db.Column(db.Integer, db.ForeignKey('questions.QuestionID'), nullable=False)
-    SelectedAnswer = db.Column(db.String(500), nullable=True)
-
-    score = db.relationship('Score', backref='user_answers')
-    question = db.relationship('Questions', backref='user_answers')
+    QuizID = db.Column(db.Integer, db.ForeignKey('quiz.QuizID', ondelete='CASCADE'), nullable=False)
+    user_answers = db.relationship('UserAnswers', backref='question', cascade='all, delete', passive_deletes=True)
 
 
 class Score(db.Model):
     __tablename__ = 'score'
     ScoreID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    QuizID = db.Column(db.Integer, db.ForeignKey('quiz.QuizID'), nullable=False)
-    UserID = db.Column(db.Integer, db.ForeignKey('user.UserID'), nullable=False)
-    TimeStamp = db.Column(db.DateTime, default=db.func.current_timestamp())  # Auto-fills time of attempt
+    QuizID = db.Column(db.Integer, db.ForeignKey('quiz.QuizID', ondelete='CASCADE'), nullable=False)
+    UserID = db.Column(db.Integer, db.ForeignKey('user.UserID', ondelete='CASCADE'), nullable=False)
+    TimeStamp = db.Column(db.DateTime, default=db.func.current_timestamp())
     TotalScore = db.Column(db.Float, nullable=False)
 
-    user = db.relationship('User', backref='scores')
-    quiz = db.relationship('Quiz', backref='scores')
+    user_answers = db.relationship('UserAnswers', backref='score', cascade='all, delete', passive_deletes=True)
+
+
+class UserAnswers(db.Model):
+    __tablename__ = 'user_answers'
+    AnswerID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    ScoreID = db.Column(db.Integer, db.ForeignKey('score.ScoreID', ondelete='CASCADE'), nullable=False)
+    QuestionID = db.Column(db.Integer, db.ForeignKey('questions.QuestionID', ondelete='CASCADE'), nullable=False)
+    SelectedAnswer = db.Column(db.String(500), nullable=True)

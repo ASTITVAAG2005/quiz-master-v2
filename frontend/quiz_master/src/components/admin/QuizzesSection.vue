@@ -117,6 +117,7 @@ export default {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         this.fetchQuizzes()
+        this.$emit('refresh') 
         this.closeModal()
       }).catch(err => {
         this.error = 'Failed to add quiz'
@@ -129,6 +130,7 @@ export default {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         this.fetchQuizzes()
+        this.$emit('refresh') 
         this.closeModal()
       }).catch(err => {
         this.error = 'Failed to update quiz'
@@ -141,6 +143,7 @@ export default {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         this.fetchQuizzes()
+        this.$emit('refresh')
       }).catch(err => {
         this.error = 'Failed to delete quiz'
         console.error(err)
