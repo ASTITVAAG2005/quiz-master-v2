@@ -6,9 +6,11 @@ from models import db, User
 from resources import api
 from jwt_authorization import generate_token, verify_token, token_required, admin_required
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 # ----------------- Initialize Flask App ------------------ #
 app = Flask(__name__)
+CORS(app)
 app.secret_key = "astitva"  # For session-based login
 
 # RESTful API Init

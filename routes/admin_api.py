@@ -65,7 +65,7 @@ class AdminLogin(Resource):
 
 
 
-    # -------------------------------- Admin and user Dashboard  -------------------------------- #
+    # -------------------------------- Admin and Dashboard  -------------------------------- #
 
 
 
@@ -172,6 +172,19 @@ class UserListAPI(Resource):
 # ---------- SUBJECTS ----------
 class SubjectAPI(Resource):
     @jwt_required()
+    def get(self):
+        subjects = Subject.query.all()
+        return [
+            {
+                "id": s.SubjectID,
+                "name": s.Subjectname,
+                "description": s.Description
+            }
+            for s in subjects
+        ], 200
+
+
+    @jwt_required()
     def post(self):
         data = request.get_json()
         name = data.get("name")
@@ -210,15 +223,28 @@ class SubjectAPI(Resource):
 # ---------- CHAPTERS ----------
 class ChapterAPI(Resource):
     @jwt_required()
+    def get(self):
+        chapters = Chapter.query.all()
+        return [
+            {
+                "id": c.ChapterID,
+                "name": c.Chaptername,
+                "subject_id": c.SubjectID,
+                "description": c.Description
+            }
+            for c in chapters
+        ], 200
+    @jwt_required()
     def post(self):
         data = request.get_json()
         name = data.get("name")
         subject_id = data.get("subject_id")
+        description = data.get("description")
 
-        if not name or not subject_id:
-            return {"message": "Chapter name and subject_id are required."}, 400
+        if not name or not subject_id or not description:
+            return {"message": "Chapter name, subject_id, and description are required."}, 400
 
-        chapter = Chapter(Chaptername=name, SubjectID=subject_id)
+        chapter = Chapter(Chaptername=name, SubjectID=subject_id, Description=description)
         db.session.add(chapter)
         db.session.commit()
         return {"message": "Chapter added successfully."}, 201
@@ -231,8 +257,11 @@ class ChapterAPI(Resource):
             return {"message": "Chapter not found."}, 404
 
         chapter.Chaptername = data.get("name", chapter.Chaptername)
+        chapter.Description = data.get("description", chapter.Description)
+        chapter.SubjectID = data.get("subject_id", chapter.SubjectID)
         db.session.commit()
         return {"message": "Chapter updated successfully."}, 200
+
 
     @jwt_required()
     def delete(self, chapter_id):
@@ -245,19 +274,56 @@ class ChapterAPI(Resource):
         return {"message": "Chapter deleted successfully."}, 200
 
 # ---------- QUIZZES ----------
+from flask import request
+from flask_jwt_extended import jwt_required
+from flask_restful import Resource
+from models import db, Quiz
+from datetime import datetime
+
 class QuizAPI(Resource):
+    @jwt_required()
+    def get(self):
+        quizzes = Quiz.query.all()
+        result = []
+        for q in quizzes:
+            chapter = Chapter.query.get(q.ChapterID)
+            subject = Subject.query.get(chapter.SubjectID) if chapter else None
+
+            result.append({
+                "id": q.QuizID,
+                "chapter_id": q.ChapterID,
+                "date": q.Date_of_quiz.strftime('%Y-%m-%d') if q.Date_of_quiz else None,
+                "time_duration": q.Time_duration,
+                "remarks": q.Remarks or "",
+                "chapter": {
+                    "ChapterID": chapter.ChapterID,
+                    "Chaptername": chapter.Chaptername,
+                    "SubjectID": chapter.SubjectID,
+                    "subject": {
+                        "SubjectID": subject.SubjectID,
+                        "Subjectname": subject.Subjectname
+                    } if subject else None
+                } if chapter else None
+            })
+
+        return result, 200
+
+
     @jwt_required()
     def post(self):
         data = request.get_json()
-        quiz = Quiz(
-            Quizname=data.get("name"),
-            ChapterID=data.get("chapter_id"),
-            TotalQuestions=data.get("total_questions"),
-            Date_of_quiz=datetime.strptime(data.get("date"), "%Y-%m-%d")
-        )
-        db.session.add(quiz)
-        db.session.commit()
-        return {"message": "Quiz added successfully."}, 201
+        try:
+            quiz = Quiz(
+                ChapterID=data.get("chapter_id"),
+                Date_of_quiz=datetime.strptime(data.get("date"), "%Y-%m-%d").date(),
+                Time_duration=data.get("time_duration"),
+                Remarks=data.get("remarks", "")
+            )
+            db.session.add(quiz)
+            db.session.commit()
+            return {"message": "Quiz added successfully."}, 201
+        except Exception as e:
+            return {"message": "Failed to add quiz", "error": str(e)}, 500
 
     @jwt_required()
     def put(self, quiz_id):
@@ -266,12 +332,15 @@ class QuizAPI(Resource):
             return {"message": "Quiz not found."}, 404
 
         data = request.get_json()
-        quiz.Quizname = data.get("name", quiz.Quizname)
-        quiz.TotalQuestions = data.get("total_questions", quiz.TotalQuestions)
-        if "date" in data:
-            quiz.Date_of_quiz = datetime.strptime(data["date"], "%Y-%m-%d")
-        db.session.commit()
-        return {"message": "Quiz updated successfully."}, 200
+        try:
+            quiz.ChapterID = data.get("chapter_id", quiz.ChapterID)
+            quiz.Date_of_quiz = datetime.strptime(data.get("date"), "%Y-%m-%d").date()
+            quiz.Time_duration = data.get("time_duration", quiz.Time_duration)
+            quiz.Remarks = data.get("remarks", quiz.Remarks)
+            db.session.commit()
+            return {"message": "Quiz updated successfully."}, 200
+        except Exception as e:
+            return {"message": "Failed to update quiz", "error": str(e)}, 500
 
     @jwt_required()
     def delete(self, quiz_id):
@@ -285,6 +354,29 @@ class QuizAPI(Resource):
 
 # ---------- QUESTIONS ----------
 class QuestionAPI(Resource):
+
+    @jwt_required()
+    def get(self):
+        current_user = User.query.get(get_jwt_identity())
+        if not current_user or current_user.Role != 'admin':
+            return {"message": "Unauthorized access."}, 403
+
+        questions = Questions.query.all()
+        data = [
+            {
+                "id": q.QuestionID,
+                "quiz_id": q.QuizID,
+                "question": q.Question_statement,
+                "option1": q.Option1,
+                "option2": q.Option2,
+                "option3": q.Option3,
+                "option4": q.Option4,
+                "correct_option": q.Correct_option
+            }
+            for q in questions
+        ]
+        return data, 200
+
     @jwt_required()
     def post(self):
         data = request.get_json()
