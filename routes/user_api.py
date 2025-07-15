@@ -135,7 +135,6 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from models import User, Subject, Chapter, Quiz, Score
 
-
 class UserDashboardData(Resource):
     @jwt_required()
     def get(self):
@@ -181,18 +180,6 @@ class UserDashboardData(Resource):
                         "is_expired": is_expired
                     })
 
-        # Fetch user scores
-        scores = Score.query.filter_by(UserID=user.UserID).all()
-        score_data = [
-            {
-                "score_id": score.ScoreID,
-                "quiz_id": score.QuizID,
-                "score": score.Score,
-                "timestamp": score.Timestamp.isoformat()
-            }
-            for score in scores
-        ]
-
         return {
             "message": "User dashboard data retrieved successfully",
             "user": {
@@ -210,9 +197,9 @@ class UserDashboardData(Resource):
                 for subject in subjects
             ],
             "upcoming_quizzes": upcoming_quizzes,
-            "scores": score_data,
             "query": query
         }, 200
+
 # -------------------------------- User Functionalities --------------------------------- #
 
 # routes/user_api.py
@@ -221,9 +208,34 @@ class UserDashboardData(Resource):
 # Store quiz progress in-memory dictionary (use Redis/DB for production)
 quiz_sessions = {}
 
+class GetQuizDetails(Resource):
+    @jwt_required()
+    def get(self, quiz_id):
+        quiz = Quiz.query.get_or_404(quiz_id)
+        questions = Questions.query.filter_by(QuizID=quiz_id).all()
+
+        return {
+            "quiz": {
+                "quiz_id": quiz.QuizID,
+                "chapter_name": quiz.chapter.Chaptername if quiz.chapter else None,
+                "time_duration": quiz.Time_duration,  # format: "HH:MM"
+                "questions": [
+                    {
+                        "question_id": q.QuestionID,
+                        "statement": q.Question_statement,
+                        "option1": q.Option1,
+                        "option2": q.Option2,
+                        "option3": q.Option3,
+                        "option4": q.Option4
+                    }
+                    for q in questions
+                ]
+            }
+        }, 200
+    
 class StartQuiz(Resource):
     @jwt_required()
-    def post(self, quiz_id):
+    def get(self, quiz_id):
         user_id = get_jwt_identity()
         quiz = Quiz.query.get_or_404(quiz_id)
         today = datetime.today().date()
@@ -238,86 +250,51 @@ class StartQuiz(Resource):
         # Initialize quiz session
         quiz_sessions[user_id] = {
             'quiz_id': quiz_id,
-            'current_question': 0,
             'user_answers': {},
             'questions': [q.QuestionID for q in questions]
         }
 
-        return {"message": "Quiz started", "quiz_id": quiz_id, "total_questions": len(questions)}, 200
-
-
-class NextQuestion(Resource):
-    @jwt_required()
-    def get(self):
-        user_id = get_jwt_identity()
-        session_data = quiz_sessions.get(user_id)
-        if not session_data:
-            return {"message": "Quiz session expired or not found."}, 403
-
-        index = session_data['current_question']
-        question_ids = session_data['questions']
-
-        if index >= len(question_ids):
-            return {"message": "All questions answered."}, 200
-
-        question = Questions.query.get(question_ids[index])
         return {
-            "question_id": question.QuestionID,
-            "statement": question.Question_statement,
-            "options": [question.Option1, question.Option2, question.Option3, question.Option4],
-            "index": index + 1,
-            "total": len(question_ids)
+            "message": "Quiz started",
+            "quiz": {
+                "quiz_id": quiz.QuizID,
+                "title": quiz.chapter.Chaptername if quiz.chapter else "Untitled Quiz",
+                "duration": quiz.Time_duration,
+                "questions": [
+                    {
+                        "id": q.QuestionID,
+                        "statement": q.Question_statement,
+                        "options": [q.Option1, q.Option2, q.Option3, q.Option4]
+                    } for q in questions
+                ]
+            }
         }, 200
-
-
-class SaveAnswer(Resource):
-    @jwt_required()
-    def post(self):
-        user_id = get_jwt_identity()
-        session_data = quiz_sessions.get(user_id)
-        if not session_data:
-            return {"message": "Quiz session not active."}, 403
-
-        data = request.get_json()
-        selected_answer = data.get("selected_answer")
-        question_id = str(data.get("question_id"))
-
-        if selected_answer and question_id:
-            session_data['user_answers'][question_id] = selected_answer
-            session_data['current_question'] += 1
-            return {"message": "Answer saved."}, 200
-
-        return {"message": "Missing answer or question_id."}, 400
-
-
+    
 class SubmitQuiz(Resource):
     @jwt_required()
     def post(self, quiz_id):
         user_id = get_jwt_identity()
-        session_data = quiz_sessions.pop(user_id, None)
-        if not session_data:
-            return {"message": "No active quiz session."}, 403
+        data = request.get_json()
+        answers = data.get("answers", {})
 
         questions = Questions.query.filter_by(QuizID=quiz_id).all()
-        score = 0
-        answers = session_data['user_answers']
-
-        for q in questions:
-            submitted = answers.get(str(q.QuestionID))
-            if submitted == q.Correct_option:
-                score += 1
-
+        score = sum(1 for q in questions if answers.get(str(q.QuestionID)) == q.Correct_option)
         final_score = (score / len(questions)) * 100
+
         new_score = Score(QuizID=quiz_id, UserID=user_id, TotalScore=final_score)
         db.session.add(new_score)
         db.session.commit()
 
-        for question_id, selected in answers.items():
-            ua = UserAnswers(ScoreID=new_score.ScoreID, QuestionID=int(question_id), SelectedAnswer=selected)
+        for qid, selected in answers.items():
+            ua = UserAnswers(ScoreID=new_score.ScoreID, QuestionID=int(qid), SelectedAnswer=selected)
             db.session.add(ua)
-        db.session.commit()
 
+        db.session.commit()
         return {"message": "Quiz submitted", "score": final_score}, 200
+
+    def options(self, quiz_id):
+        return {}, 200
+
 
 
 class UserScores(Resource):

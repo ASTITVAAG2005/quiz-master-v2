@@ -222,7 +222,7 @@ export default {
       this.selectedQuiz = this.quizzes.find(q => q.quiz.id === quizId)
     },
     startQuiz(quizId) {
-      this.$router.push(`/quiz/start/${quizId}`)
+      this.$router.push(`/quiz/start/${quizId}`) 
     },
     formatDate(dateStr) {
       const date = new Date(dateStr)

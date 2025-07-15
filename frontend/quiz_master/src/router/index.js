@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+
 import AdminDashboard from '@/components/admin/AdminDashboard.vue'
 import ViewUsers from '@/components/admin/ViewUsers.vue'  
 import AdminSummaryPage from '@/components/admin/AdminSummaryPage.vue'
@@ -7,6 +8,7 @@ import AdminSummaryPage from '@/components/admin/AdminSummaryPage.vue'
 import UserDashboard from '@/components/user/UserDashboard.vue'
 import UserSummaryPage from '@/components/user/UserSummaryPage.vue'
 import UserQuizScore from '@/components/user/UserQuizScore.vue'
+import AttemptQuiz from '@/components/user/AttemptQuiz.vue'  
 
 const routes = [
   {
@@ -30,11 +32,11 @@ const routes = [
     component: AdminSummaryPage
   },
   {
-  path: '/user-dashboard',
-  name: 'UserDashboard',
-  component: UserDashboard
-},
-{
+    path: '/user-dashboard',
+    name: 'UserDashboard',
+    component: UserDashboard
+  },
+  {
     path: '/user/summary',
     name: 'UserSummary',
     component: UserSummaryPage
@@ -43,8 +45,12 @@ const routes = [
     path: '/user/quiz-scores',
     name: 'UserQuizScore',
     component: UserQuizScore
+  },
+  {
+    path: '/quiz/start/:quiz_id',         
+    name: 'AttemptQuiz',
+    component: AttemptQuiz
   }
-
 ]
 
 const router = createRouter({
