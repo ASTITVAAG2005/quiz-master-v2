@@ -9,7 +9,8 @@ from routes.admin_api import (
     ChapterAPI,
     QuizAPI,
     QuestionAPI,
-    AdminSummary
+    AdminSummary,
+    AdminSearchAPI
 )
 
 # User imports
@@ -44,6 +45,7 @@ api.add_resource(VerifyToken, '/verify-token')
 # 🛠️ Admin Routes
 # -------------------------------
 api.add_resource(AdminDashboardData, '/admin/dashboard-data')
+api.add_resource(AdminSearchAPI, '/admin/search')
 api.add_resource(UserListAPI, '/admin/users')
 api.add_resource(SubjectAPI, '/admin/subjects', '/admin/subjects/<int:subject_id>')
 api.add_resource(ChapterAPI, '/admin/chapters', '/admin/chapters/<int:chapter_id>')

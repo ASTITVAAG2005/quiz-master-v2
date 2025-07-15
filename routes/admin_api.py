@@ -8,7 +8,8 @@ from flask_jwt_extended import create_access_token
 from datetime import timedelta
 from datetime import datetime
 from flask_jwt_extended import jwt_required, get_jwt_identity
-
+import matplotlib
+matplotlib.use('Agg')  
 
 import matplotlib.pyplot as plt
 import os
@@ -67,9 +68,45 @@ class AdminLogin(Resource):
 
     # -------------------------------- Admin and Dashboard  -------------------------------- #
 
+class AdminSearchAPI(Resource):
+    @jwt_required()
+    def options(self):
+        return {}, 200  # Needed for CORS preflight
 
+    @jwt_required()
+    def get(self):
+        query = request.args.get('q', '').strip()
 
+        if not query:
+            return {
+                "subjects": [],
+                "chapters": [],
+                "quizzes": [],
+                "questions": []
+            }, 200
 
+        # Search logic
+        subjects = Subject.query.filter(Subject.Subjectname.ilike(f"%{query}%")).all()
+        chapters = Chapter.query.filter(Chapter.Chaptername.ilike(f"%{query}%")).all()
+        quizzes = Quiz.query.filter(Quiz.Remarks.ilike(f"%{query}%")).all()
+        questions = Questions.query.filter(Questions.Question_statement.ilike(f"%{query}%")).all()
+
+        # Format data
+        quizzes_data = []
+        for quiz in quizzes:
+            chapter = Chapter.query.get(quiz.ChapterID)
+            quizzes_data.append({
+                "id": quiz.QuizID,
+                "title": chapter.Chaptername if chapter else "Unknown Chapter",
+                "total_questions": len(quiz.QuestionsR)
+            })
+
+        return {
+            "subjects": [{"id": s.SubjectID, "name": s.Subjectname} for s in subjects],
+            "chapters": [{"id": c.ChapterID, "name": c.Chaptername} for c in chapters],
+            "quizzes": quizzes_data,
+            "questions": [{"id": q.QuestionID, "question": q.Question_statement} for q in questions]
+        }, 200
 class AdminDashboardData(Resource):
     @jwt_required()
     def get(self):
@@ -150,7 +187,7 @@ class UserListAPI(Resource):
         if not current_user or current_user.Role != 'admin':
             return {"message": "Unauthorized access."}, 403
 
-        users = User.query.filter(User.Role != 'admin').all()
+        users = User.query.all()
         data = [
             {
                 "id": u.UserID,
@@ -423,7 +460,6 @@ class QuestionAPI(Resource):
     # -------------------------------- Summary Charts --------------------------------- #
 
     # routes/admin_api.py
-
 
 class AdminSummary(Resource):
     @jwt_required()

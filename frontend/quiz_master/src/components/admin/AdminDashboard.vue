@@ -31,7 +31,13 @@
       <ChaptersSection :chapters="chapters" :subjects="subjects" @refresh="fetchData" />
       <QuizzesSection :quizzes="quizzes" :chapters="chapters" @refresh="fetchData" />
       <QuestionsSection :quizzes="quizzes" @refresh="fetchData" />
-      <SearchResults v-if="query" :query="query" :results="searchResults" />
+      <SearchResults
+  ref="searchResults"
+  v-if="query"
+  :query="query"
+  :results="searchResults"
+/>
+
     </div>
   </div>
 </template>
@@ -98,24 +104,37 @@ export default {
         })
     },
     search() {
-      const token = localStorage.getItem('access_token')
-      axios
-        .get(`http://localhost:5000/api/admin/search?q=${this.query}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(res => {
-          this.searchResults = res.data
-        })
-        .catch(error => {
-          console.error('Error during search:', error)
-          this.error = 'Search failed.'
-        })
-    },
+  const token = localStorage.getItem('access_token');
+  const cleanQuery = this.query.trim();
+  if (!cleanQuery) return;
+
+  axios
+    .get(`http://localhost:5000/api/admin/search?q=${encodeURIComponent(cleanQuery)}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => {
+      this.searchResults = {
+        subjects: res.data.subjects || [],
+        chapters: res.data.chapters || [],
+        quizzes: res.data.quizzes || [],
+        questions: res.data.questions || []
+      };
+
+      // Show the modal
+      this.$nextTick(() => {
+    this.$refs.searchResults?.showModal();
+  });
+    })
+    .catch(error => {
+      console.error('Error during search:', error);
+      this.error = 'Search failed.';
+    });
+},
     goToSummary() {
       this.$router.push('/admin/summary')
     },
     goToUsers() {
-      this.$router.push('/admin/users')
+      this.$router.push('/admin/view-users')
     },
     logout() {
       const token = localStorage.getItem('access_token')
