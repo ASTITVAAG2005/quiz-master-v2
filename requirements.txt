@@ -1,0 +1,12 @@
+Flask
+flask_sqlalchemy
+flask_restful
+flask_jwt_extended
+flask_cors
+flask_caching
+flask_mail
+matplotlib
+Werkzeug
+PyJWT
+celery
+redis

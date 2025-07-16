@@ -2,9 +2,14 @@
   <div>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div class="container">
+      <div class="container d-flex justify-content-between align-items-center">
         <a class="navbar-brand" href="#">Quiz Master</a>
-        <button class="btn btn-primary ms-auto" @click="goBack">Back to Dashboard</button>
+
+        <!-- Right side buttons -->
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-success" @click="exportScores">Export as CSV</button>
+          <button class="btn btn-primary" @click="goBack">Back to Dashboard</button>
+        </div>
       </div>
     </nav>
 
@@ -99,6 +104,20 @@ export default {
         this.error = 'Error loading scores.'
       })
     },
+    exportScores() {
+    const token = localStorage.getItem('access_token')
+    axios.get('http://localhost:5000/api/user/export-scores', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => {
+      const filename = res.data.filename
+      const downloadUrl = `http://localhost:5000/static/exports/${filename}`
+      window.open(downloadUrl, '_blank')
+    })
+    .catch(err => {
+      console.error('Export failed:', err)
+    })
+  },
     openAnswersModal(score) {
       this.selectedScore = score
     },

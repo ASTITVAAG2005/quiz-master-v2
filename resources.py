@@ -24,7 +24,8 @@ from routes.user_api import (
     StartQuiz,
     SubmitQuiz,
     UserScores,
-    UserSummary
+    UserSummary,
+    ExportUserScores
 )
 
 # Initialize API with '/api' prefix
@@ -62,3 +63,4 @@ api.add_resource(StartQuiz, '/user/quiz/<int:quiz_id>/start')
 api.add_resource(SubmitQuiz, '/user/quiz/<int:quiz_id>/submit')
 api.add_resource(UserScores, '/user/scores')
 api.add_resource(UserSummary, '/user/summary')
+api.add_resource(ExportUserScores, '/user/export-scores')

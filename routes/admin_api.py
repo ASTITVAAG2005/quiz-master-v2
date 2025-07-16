@@ -14,6 +14,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 
+from caching import cache
+
 
 # Import models and database
 from models import db, User, Subject, Chapter, Quiz, Questions, UserAnswers, Score
@@ -182,6 +184,7 @@ class AdminDashboardData(Resource):
 # ---------- USERS ----------
 class UserListAPI(Resource):
     @jwt_required()
+    @cache.cached()
     def get(self):
         current_user = User.query.get(get_jwt_identity())
         if not current_user or current_user.Role != 'admin':
@@ -463,6 +466,7 @@ class QuestionAPI(Resource):
 
 class AdminSummary(Resource):
     @jwt_required()
+    @cache.cached()
     def get(self):
         user_id = get_jwt_identity()
         admin = User.query.get(user_id)

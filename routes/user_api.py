@@ -6,10 +6,14 @@ from models import db, User
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-
+from flask import jsonify
+from datetime import datetime
+import os
+import csv
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+from caching import cache
 
 # Import models and database
 from models import db, User, Subject, Chapter, Quiz, Questions, UserAnswers, Score
@@ -137,6 +141,7 @@ from models import User, Subject, Chapter, Quiz, Score
 
 class UserDashboardData(Resource):
     @jwt_required()
+    @cache.cached()
     def get(self):
         current_user_id = get_jwt_identity()
         user = User.query.get(current_user_id)
@@ -210,6 +215,7 @@ quiz_sessions = {}
 
 class GetQuizDetails(Resource):
     @jwt_required()
+    @cache.cached()
     def get(self, quiz_id):
         quiz = Quiz.query.get_or_404(quiz_id)
         questions = Questions.query.filter_by(QuizID=quiz_id).all()
@@ -299,6 +305,7 @@ class SubmitQuiz(Resource):
 
 class UserScores(Resource):
     @jwt_required()
+    @cache.cached()
     def get(self):
         user_id = get_jwt_identity()
         scores = Score.query.filter_by(UserID=user_id).all()
@@ -336,11 +343,45 @@ class UserScores(Resource):
 
         return {"scores": result}, 200
 
+
+class ExportUserScores(Resource):
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()
+        scores = Score.query.filter_by(UserID=user_id).all()
+
+        export_folder = os.path.join("static", "exports")
+        os.makedirs(export_folder, exist_ok=True)
+
+        filename = f"user_{user_id}_quiz_scores_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        filepath = os.path.join(export_folder, filename)
+
+        with open(filepath, mode='w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["Quiz ID", "Chapter", "Subject", "Date", "Score", "Remarks"])
+
+            for score in scores:
+                quiz = score.quiz
+                chapter = quiz.chapter if quiz else None
+                subject = chapter.subject if chapter else None
+
+                writer.writerow([
+                    quiz.QuizID if quiz else "N/A",
+                    chapter.Chaptername if chapter else "N/A",
+                    subject.Subjectname if subject else "N/A",
+                    score.TimeStamp.strftime('%d-%m-%Y %H:%M:%S'),
+                    score.TotalScore,
+                    "Passed" if score.TotalScore >= 40 else "Needs Retake"
+                ])
+
+        return jsonify({ "filename": filename })
+        
 # -------------------------------- Summary Charts --------------------------------- #
 
 
 class UserSummary(Resource):
     @jwt_required()
+    @cache.cached()
     def get(self):
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
