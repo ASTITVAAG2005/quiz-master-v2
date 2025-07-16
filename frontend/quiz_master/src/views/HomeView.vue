@@ -1,5 +1,5 @@
 <template>
-  <div class="container text-center mt-5">
+  <div>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
@@ -14,27 +14,30 @@
       </div>
     </nav>
 
-    <!-- Welcome Text -->
-    <h1>Welcome to Quiz Master</h1>
-    <h6>Dare to challenge your mind? Step in and find out!</h6>
+    <!-- Page Content -->
+    <div class="container text-center mt-5">
+      <!-- Welcome Text -->
+      <h1>Welcome to Quiz Master</h1>
+      <h6>Dare to challenge your mind? Step in and find out!</h6>
 
-    <!-- Image -->
-    <div class="d-flex justify-content-center">
+      <!-- Image -->
+      <div class="d-flex justify-content-center">
         <img src="@/assets/Student_exam_cartoon2.jpg" alt="Student Exam Cartoon" class="img-fluid mt-3" />
-    </div>
+      </div>
 
-    <!-- Signup -->
-    <div class="mt-5">
-      <p style="font-size: 1.2rem; font-weight: bold; color: #333;">
-        New here? No worries! <br />Create an account and start your journey :)
-      </p>
-      <button class="btn btn-success" @click="showSignupModal = true">Sign Up as a User</button>
-    </div>
+      <!-- Signup -->
+      <div class="mt-5">
+        <p style="font-size: 1.2rem; font-weight: bold; color: #333;">
+          New here? No worries! <br />Create an account and start your journey :)
+        </p>
+        <button class="btn btn-success" @click="showSignupModal = true">Sign Up as a User</button>
+      </div>
 
-    <!-- Modals -->
-    <AdminLoginModal v-if="showAdminModal" @close="showAdminModal = false" />
-    <UserLoginModal v-if="showUserModal" @close="showUserModal = false" />
-    <UserSignupModal v-if="showSignupModal" @close="showSignupModal = false" />
+      <!-- Modals -->
+      <AdminLoginModal v-if="showAdminModal" @close="showAdminModal = false" />
+      <UserLoginModal v-if="showUserModal" @close="showUserModal = false" />
+      <UserSignupModal v-if="showSignupModal" @close="showSignupModal = false" />
+    </div>
   </div>
 </template>
 
@@ -67,5 +70,8 @@ export default {
 </script>
 
 <style scoped>
-/* Optional custom styles */
+/* Optional: Remove body margin if present globally */
+body {
+  margin: 0;
+}
 </style>

@@ -18,7 +18,7 @@
               <th>Quiz</th>
               <th>Chapter</th>
               <th>Subject</th>
-              <th>Date</th>
+              <th>Date and Time</th>
               <th>Score</th>
               <th>Action</th>
             </tr>
@@ -29,7 +29,7 @@
               <td>{{ score.chapter_name }}</td>
               <td>{{ score.subject_name }}</td>
               <td>{{ score.timestamp }}</td>
-              <td>{{ score.total_score }}%</td>
+              <td>{{ score.total_score.toFixed(2) }}%</td>
               <td>
                 <button class="btn btn-info btn-sm" @click="openAnswersModal(score)">View Answers</button>
                 <span v-if="score.retake_allowed">

@@ -1,7 +1,7 @@
 <template>
-  <div class="modal-backdrop">
-    <div class="modal-dialog-centered modal">
-      <div class="modal-content">
+  <div class="custom-modal-backdrop">
+    <div class="custom-modal-dialog">
+      <div class="custom-modal-content">
         <div class="modal-header">
           <h5 class="modal-title">User Login</h5>
           <button type="button" class="btn-close" @click="$emit('close')"></button>
@@ -57,15 +57,29 @@ export default {
 </script>
 
 <style scoped>
-.modal-backdrop {
+.custom-modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1050;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.custom-modal-dialog {
+  max-width: 400px;
+  width: 100%;
+}
+
+.custom-modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  width: 100%;
 }
 </style>
