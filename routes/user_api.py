@@ -166,7 +166,7 @@ class UserDashboardData(Resource):
                             "id": quiz.QuizID,
                             "date": quiz.Date_of_quiz.strftime('%Y-%m-%d'),
                             "duration": quiz.Time_duration,
-                            "total_questions": len(quiz.QuestionsR)
+                            "total_questions": len(quiz.questions)
                         },
                         "chapter": {
                             "id": chapter.ChapterID,
@@ -314,7 +314,7 @@ class UserScores(Resource):
             subject = chapter.subject if chapter else None
 
             questions_data = []
-            for question in quiz.QuestionsR:
+            for question in quiz.questions:
                 user_answer_obj = next((ua for ua in score.user_answers if ua.QuestionID == question.QuestionID), None)
                 questions_data.append({
                     "id": question.QuestionID,
