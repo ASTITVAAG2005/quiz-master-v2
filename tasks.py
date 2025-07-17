@@ -13,8 +13,22 @@ def send_daily_reminders():
     for user in users:
         # Check logic: if they haven’t visited recently or new quiz exists
         # You'll need a `last_login` and `created_on` timestamp logic
-        email_subject = "Quiz Reminder"
-        email_body = f"Hi {user.Fullname},\n\nDon't forget to check for new quizzes today!"
+        email_subject = "🧠 Daily Quiz Reminder – Keep Your Streak Alive!"
+        email_body = f"""
+        Hi {user.Fullname},
+
+        Hope you're doing well!
+
+        This is your friendly reminder from Quiz Master to complete your daily quiz and keep building your knowledge. Every quiz you take brings you one step closer to mastering your subjects!
+
+        💡 Tip: Consistency is key. Just 5 minutes a day can make a big difference.
+
+        Log in now and challenge yourself:
+        http://localhost:8080/
+
+        Stay sharp and keep learning,
+        – The Quiz Master Team
+        """
         msg = Message(subject=email_subject, recipients=[user.Email], body=email_body)
         mail.send(msg)
     return "Daily reminders sent."

@@ -1,15 +1,53 @@
 <!DOCTYPE html>
 <html>
-<head><title>Monthly Report Quiz Master</title></head>
+<head>
+  <title>Monthly Quiz Summary - Quiz Master</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #f9f9f9;
+    }
+    h2 {
+      color: #4CAF50;
+    }
+    .summary {
+      margin-top: 20px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
 <body>
-  <h2>Hi {{ username }},</h2>
-  <p>Here is your monthly quiz summary for {{ report_date }}:</p>
-  <ul>
-    <li>Total quizzes taken: {{ quiz_count }}</li>
-    <li>Average score: {{ average_score }}</li>
-  </ul>
-  <p>Keep learning!</p>
-  <p>Best regards,</p>
-  <p>Quiz Master Team</p>
+  <div class="container">
+    <h2>Hello {{ username }},</h2>
+    <p>We hope you're doing well! Here's your personalized quiz performance summary for <strong>{{ report_date }}</strong>:</p>
+    
+    <div class="summary">
+      <ul>
+        <li><strong>Total Quizzes Taken:</strong> {{ quiz_count }}</li>
+        <li><strong>Average Score:</strong> {{ average_score }}%</li>
+      </ul>
+    </div>
+
+    <p>We’re proud of the effort you're putting in. Keep challenging yourself and improving!</p>
+    <p>Want to do better? Try revisiting quizzes or reviewing the questions you got wrong.</p>
+
+    <p class="footer">
+      Best regards,<br>
+      <strong>Quiz Master Team</strong><br>
+      <em>Your journey to knowledge starts here.</em>
+    </p>
+  </div>
 </body>
 </html>
