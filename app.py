@@ -1,8 +1,3 @@
-# Step 1: Remove circular import from app.py
-# Instead of importing `tasks` at the top of app.py, import only inside __main__ block
-
-# ------------------ UPDATED app.py ------------------ #
-
 import os
 from datetime import datetime, timedelta
 from flask import Flask
@@ -124,12 +119,5 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         create_admin()
-    import tasks  # Safe here after celery is defined
+    import tasks  
     app.run(debug=True)
-
-# ------------------ celery_tasker.py remains same ------------------ #
-# ------------------ tasks.py remains same ------------------ #
-
-# ✅ NOW YOU CAN RUN:
-# celery -A tasks.celery worker --loglevel=info
-# celery -A tasks.celery beat --loglevel=info
