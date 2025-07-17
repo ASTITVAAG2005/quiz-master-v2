@@ -186,8 +186,11 @@ This video covers:
 ## 📝 Contact
 
 **Astitva Agarwal**
+
 Student, IITM BS Degree Program
+
 Course: Modern Application Development - II
+
 Project: Quiz Master - V2
 
 Email: *\[[astitvaag2005@gmail.com](mailto:astitvaag2005@gmail.com)]*
