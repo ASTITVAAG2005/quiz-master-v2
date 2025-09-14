@@ -9,4 +9,6 @@ matplotlib
 Werkzeug
 PyJWT
 celery
+
 redis
+gunicorn
