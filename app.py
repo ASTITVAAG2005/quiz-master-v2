@@ -115,9 +115,21 @@ def trigger_monthly():
     send_monthly_activity_report.delay()
     return "Monthly report task triggered!"
 
+from flask import send_from_directory
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_vue(path):
+    if path and os.path.exists(os.path.join("dist", path)):
+        return send_from_directory("dist", path)
+    return send_from_directory("dist", "index.html")
+
+
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         create_admin()
     import tasks  
     app.run(debug=True)
+
