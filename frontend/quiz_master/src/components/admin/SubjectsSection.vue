@@ -97,7 +97,7 @@ export default {
     fetchSubjects() {
       const token = localStorage.getItem("access_token")
       this.loading = true
-      axios.get('http://localhost:5000/api/admin/subjects', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/admin/subjects', {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {
@@ -112,7 +112,7 @@ export default {
 
     addSubject() {
       const token = localStorage.getItem("access_token")
-      axios.post('http://localhost:5000/api/admin/subjects', this.newSubject, {
+  axios.post('https://quiz-master-v2-giuh.onrender.com/api/admin/subjects', this.newSubject, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(() => {
@@ -134,7 +134,7 @@ export default {
 
     updateSubject() {
       const token = localStorage.getItem("access_token")
-      axios.put(`http://localhost:5000/api/admin/subjects/${this.editedSubject.id}`, {
+  axios.put(`https://quiz-master-v2-giuh.onrender.com/api/admin/subjects/${this.editedSubject.id}`, {
         name: this.editedSubject.name,
         description: this.editedSubject.description
       }, {
@@ -154,7 +154,7 @@ export default {
 
     deleteSubject(id) {
       const token = localStorage.getItem("access_token")
-      axios.delete(`http://localhost:5000/api/admin/subjects/${id}`, {
+  axios.delete(`https://quiz-master-v2-giuh.onrender.com/api/admin/subjects/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(() => {

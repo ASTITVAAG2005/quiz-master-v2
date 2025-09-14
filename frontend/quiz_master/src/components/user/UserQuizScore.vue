@@ -93,7 +93,7 @@ export default {
   methods: {
     fetchScores() {
       const token = localStorage.getItem('access_token')
-      axios.get('http://localhost:5000/api/user/scores', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/user/scores', {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {
@@ -106,12 +106,12 @@ export default {
     },
     exportScores() {
     const token = localStorage.getItem('access_token')
-    axios.get('http://localhost:5000/api/user/export-scores', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/user/export-scores', {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => {
       const filename = res.data.filename
-      const downloadUrl = `http://localhost:5000/static/exports/${filename}`
+  const downloadUrl = `https://quiz-master-v2-giuh.onrender.com/static/exports/${filename}`
       window.open(downloadUrl, '_blank')
     })
     .catch(err => {

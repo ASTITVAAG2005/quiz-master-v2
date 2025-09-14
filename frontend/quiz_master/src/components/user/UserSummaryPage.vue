@@ -17,7 +17,7 @@
         <img
           v-if="chart"
           class="img-fluid"
-          :src="`http://localhost:5000${chart}`"
+          :src="`https://quiz-master-v2-giuh.onrender.com${chart}`"
           alt="Performance Chart"
         />
         <p v-if="error" class="text-danger mt-3">{{ error }}</p>
@@ -44,7 +44,7 @@ export default {
     fetchSummary() {
       const token = localStorage.getItem('access_token')
       axios
-        .get('http://localhost:5000/api/user/summary', {
+  .get('https://quiz-master-v2-giuh.onrender.com/api/user/summary', {
           headers: {
             Authorization: `Bearer ${token}`
           }

@@ -80,13 +80,13 @@ export default {
       this.error = null
 
       Promise.all([
-        axios.get('http://localhost:5000/api/admin/subjects', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/admin/subjects', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get('http://localhost:5000/api/admin/chapters', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/admin/chapters', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get('http://localhost:5000/api/admin/quizzes', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/admin/quizzes', {
           headers: { Authorization: `Bearer ${token}` }
         })
       ])
@@ -109,7 +109,7 @@ export default {
   if (!cleanQuery) return;
 
   axios
-    .get(`http://localhost:5000/api/admin/search?q=${encodeURIComponent(cleanQuery)}`, {
+  .get(`https://quiz-master-v2-giuh.onrender.com/api/admin/search?q=${encodeURIComponent(cleanQuery)}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => {
@@ -139,7 +139,7 @@ export default {
     logout() {
       const token = localStorage.getItem('access_token')
       axios
-        .post('http://localhost:5000/api/logout', {}, {
+  .post('https://quiz-master-v2-giuh.onrender.com/api/logout', {}, {
           headers: { Authorization: `Bearer ${token}` }
         })
         .then(() => {

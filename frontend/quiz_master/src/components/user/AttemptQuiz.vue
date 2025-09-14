@@ -72,7 +72,7 @@ export default {
       const token = localStorage.getItem('access_token')
       const quizId = this.$route.params.quiz_id
 
-      axios.get(`http://localhost:5000/api/user/quiz/${quizId}/start`, {
+  axios.get(`https://quiz-master-v2-giuh.onrender.com/api/user/quiz/${quizId}/start`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => {
         const q = res.data.quiz
@@ -112,7 +112,7 @@ export default {
       const quizId = this.$route.params.quiz_id
       const token = localStorage.getItem('access_token')
 
-      axios.post(`http://localhost:5000/api/user/quiz/${quizId}/submit`, {
+  axios.post(`https://quiz-master-v2-giuh.onrender.com/api/user/quiz/${quizId}/submit`, {
         answers: this.userAnswers
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -127,7 +127,7 @@ export default {
     },
     logout() {
       const token = localStorage.getItem('access_token')
-      axios.post('http://localhost:5000/api/logout', {}, {
+  axios.post('https://quiz-master-v2-giuh.onrender.com/api/logout', {}, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         localStorage.removeItem('access_token')

@@ -87,7 +87,7 @@ export default {
       const token = localStorage.getItem('access_token')
       this.loading = true
       axios
-        .get('http://localhost:5000/api/admin/users', {
+  .get('https://quiz-master-v2-giuh.onrender.com/api/admin/users', {
           headers: {
             Authorization: `Bearer ${token}`
           }

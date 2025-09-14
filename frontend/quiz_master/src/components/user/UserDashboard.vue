@@ -178,7 +178,7 @@ export default {
   methods: {
     fetchUserData() {
       const token = localStorage.getItem('access_token')
-      axios.get('http://localhost:5000/api/user/dashboard', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/user/dashboard', {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => {
         this.user = res.data.user
@@ -193,7 +193,7 @@ export default {
       const token = localStorage.getItem('access_token')
       if (!this.query.trim()) return
 
-      axios.get(`http://localhost:5000/api/admin/search?q=${encodeURIComponent(this.query)}`, {
+  axios.get(`https://quiz-master-v2-giuh.onrender.com/api/admin/search?q=${encodeURIComponent(this.query)}`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => {
         this.searchResults = res.data
@@ -211,7 +211,7 @@ export default {
     },
     logout() {
       const token = localStorage.getItem('access_token')
-      axios.post('http://localhost:5000/api/logout', {}, {
+  axios.post('https://quiz-master-v2-giuh.onrender.com/api/logout', {}, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         localStorage.removeItem('access_token')

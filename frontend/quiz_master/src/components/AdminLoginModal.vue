@@ -38,7 +38,7 @@ export default {
   methods: {
     async loginAdmin() {
       try {
-        const res = await axios.post('http://localhost:5000/api/adminlogin', {
+  const res = await axios.post('https://quiz-master-v2-giuh.onrender.com/api/adminlogin', {
           username: this.username,
           password: this.password
         });

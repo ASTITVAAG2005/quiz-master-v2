@@ -56,7 +56,7 @@ export default {
   methods: {
     async signupUser() {
       try {
-        const res = await axios.post('http://localhost:5000/api/usersignup', this.form);
+  const res = await axios.post('https://quiz-master-v2-giuh.onrender.com/api/usersignup', this.form);
         if (res.status === 201 || res.status === 200) {
           this.success = 'Signup successful! You can now log in.';
           this.error = '';

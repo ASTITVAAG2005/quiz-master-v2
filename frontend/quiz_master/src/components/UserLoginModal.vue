@@ -39,7 +39,7 @@ export default {
   methods: {
     async loginUser() {
       try {
-        const response = await axios.post('http://localhost:5000/api/userlogin', {
+  const response = await axios.post('https://quiz-master-v2-giuh.onrender.com/api/userlogin', {
           username: this.username,
           password: this.password
         });

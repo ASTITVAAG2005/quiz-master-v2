@@ -89,7 +89,7 @@ export default {
     },
     fetchQuizzes() {
       const token = localStorage.getItem('access_token')
-      axios.get('http://localhost:5000/api/admin/quizzes', {
+  axios.get('https://quiz-master-v2-giuh.onrender.com/api/admin/quizzes', {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => {
         this.quizzes = res.data
@@ -113,7 +113,7 @@ export default {
     },
     addQuiz() {
       const token = localStorage.getItem('access_token')
-      axios.post('http://localhost:5000/api/admin/quizzes', this.quizForm, {
+  axios.post('https://quiz-master-v2-giuh.onrender.com/api/admin/quizzes', this.quizForm, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         this.fetchQuizzes()
@@ -126,7 +126,7 @@ export default {
     },
     updateQuiz() {
       const token = localStorage.getItem('access_token')
-      axios.put(`http://localhost:5000/api/admin/quizzes/${this.quizForm.id}`, this.quizForm, {
+  axios.put(`https://quiz-master-v2-giuh.onrender.com/api/admin/quizzes/${this.quizForm.id}`, this.quizForm, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         this.fetchQuizzes()
@@ -139,7 +139,7 @@ export default {
     },
     deleteQuiz(id) {
       const token = localStorage.getItem('access_token')
-      axios.delete(`http://localhost:5000/api/admin/quizzes/${id}`, {
+  axios.delete(`https://quiz-master-v2-giuh.onrender.com/api/admin/quizzes/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(() => {
         this.fetchQuizzes()

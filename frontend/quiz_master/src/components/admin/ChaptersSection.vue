@@ -123,7 +123,7 @@ export default {
     fetchChapters() {
       const token = localStorage.getItem("access_token")
       this.loading = true
-      axios.get("http://localhost:5000/api/admin/chapters", {
+  axios.get("https://quiz-master-v2-giuh.onrender.com/api/admin/chapters", {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {
@@ -140,7 +140,7 @@ export default {
 
     addChapter() {
       const token = localStorage.getItem("access_token")
-      axios.post("http://localhost:5000/api/admin/chapters", this.newChapter, {
+  axios.post("https://quiz-master-v2-giuh.onrender.com/api/admin/chapters", this.newChapter, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(() => {
@@ -163,7 +163,7 @@ export default {
     updateChapter() {
       const token = localStorage.getItem("access_token")
       
-      axios.put(`http://localhost:5000/api/admin/chapters/${this.editedChapter.id}`, {
+  axios.put(`https://quiz-master-v2-giuh.onrender.com/api/admin/chapters/${this.editedChapter.id}`, {
         name: this.editedChapter.name,
         subject_id: this.editedChapter.subject_id,
         description: this.editedChapter.description
@@ -184,7 +184,7 @@ export default {
 
     deleteChapter(id) {
       const token = localStorage.getItem("access_token")
-      axios.delete(`http://localhost:5000/api/admin/chapters/${id}`, {
+  axios.delete(`https://quiz-master-v2-giuh.onrender.com/api/admin/chapters/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(() => {

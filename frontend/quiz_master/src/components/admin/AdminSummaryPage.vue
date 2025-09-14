@@ -15,7 +15,7 @@
         <img
           v-if="charts.length"
           class="img-fluid"
-          :src="`http://localhost:5000${charts[1]}`"
+          :src="`https://quiz-master-v2-giuh.onrender.com${charts[1]}`"
           alt="Quiz Statistics Chart"
         />
       </div>
@@ -25,7 +25,7 @@
         <img
           v-if="charts.length"
           class="img-fluid"
-          :src="`http://localhost:5000${charts[0]}`"
+          :src="`https://quiz-master-v2-giuh.onrender.com${charts[0]}`"
           alt="User Participation Chart"
         />
       </div>
@@ -53,7 +53,7 @@ export default {
     fetchSummary() {
       const token = localStorage.getItem('access_token')
       axios
-        .get('http://localhost:5000/api/admin/summary', {
+  .get('https://quiz-master-v2-giuh.onrender.com/api/admin/summary', {
           headers: {
             Authorization: `Bearer ${token}`
           }
