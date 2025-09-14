@@ -1,6 +1,3 @@
-Absolutely! Here's the revised **README.md** with the requested changes:
-
----
 
 # 🧠 Quiz Master - V2
 
